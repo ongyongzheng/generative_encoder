@@ -7,7 +7,7 @@ import numpy as np
 Source: https://github.com/eriklindernoren/PyTorch-GAN/blob/master/implementations/began/began.py
 """
 class Generator(nn.Module):
-    def __init__(self, img_size, latent_size):
+    def __init__(self, img_size, latent_size, channels):
         super(Generator, self).__init__()
 
         self.init_size = img_size // 4
@@ -24,7 +24,7 @@ class Generator(nn.Module):
             nn.Conv2d(128, 64, 3, stride=1, padding=1),
             nn.BatchNorm2d(64, 0.8),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Conv2d(64, opt.channels, 3, stride=1, padding=1),
+            nn.Conv2d(64, channels, 3, stride=1, padding=1),
             nn.Tanh(),
         )
 
