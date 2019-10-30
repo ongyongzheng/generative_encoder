@@ -117,3 +117,6 @@ Thumbs.db
 /*/*.jpg
 /data/*
 /results/*
+
+# vs code
+.vscode
