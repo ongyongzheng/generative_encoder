@@ -3,9 +3,11 @@ import torch
 
 class Config(object):
     def __init__(self):
+        # data configs
         self.dataset_path = './data/'
         self.save_path = './results/'
         self.mode = 'celeba'
+        self.test_size = 0.1
         # nn configs
         self.img_size = 64
         self.latent_size = 62
