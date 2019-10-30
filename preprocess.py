@@ -5,10 +5,7 @@ from sklearn.model_selection import train_test_split
 from progress.bar import Bar
 
 from config import Config
-
-def get_folder_dir(mode):
-    if mode == 'celeba':
-        return 'CelebA', 'img_align_celeba'
+from utils import get_folder_dir
 
 def preprocess(img_list, save_dir, img_dir, size):
     print("saving images to {}".format(save_dir))
