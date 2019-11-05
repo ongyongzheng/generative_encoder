@@ -11,11 +11,14 @@ class Config(object):
         # nn configs
         self.img_size = 64
         self.latent_size = 62
-        self.channels = 1 # num of image channels
+        self.channels = 3 # num of image channels
         self.img_shape = (self.channels, self.img_size, self.img_size)
         self.num_workers = 2
+        self.gamma = 0.5
+        self.lambda_k = 0.001
         # training configs
         self.batch_size = 64
+        self.random_size = 2*8
         self.n_epochs = 200
         self.lr = 0.0002
         self.device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")

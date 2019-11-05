@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+from torch.autograd import Variable
 import numpy as np
 import os
 
@@ -33,4 +34,22 @@ train, test = make_loader(
     config.num_workers
 )
 
-began.train(train)
+z_G = Variable(torch.FloatTensor(config.random_size, config.latent_size)).to(config.device)
+z_G.data.normal_(0,1)
+
+conv_scores = []
+best_c = 1e10
+for epoch in range(config.n_epochs):
+    running_g, running_d = began.train(train)
+    running_c = began.test(test)
+    conv_scores.append(running_c)
+    print("Epoch {} - G-loss = {:.4f}, D-loss = {:.4f}".format(epoch+1, running_g, running_d))
+    print("Convergence value {:.4f}".format(running_c))
+    np.save(config.save_path + 'conv_scores', conv_scores)
+    if running_c < best_c:
+        # model improved, so save
+        began.save_model(config.save_path)
+        best_c = running_c
+    if epoch + 1 % 10 == 0:
+        # save checkpoint
+        began.visualize(z_G, config.save_path + 'ep' + str(epoch+1) + '_')
