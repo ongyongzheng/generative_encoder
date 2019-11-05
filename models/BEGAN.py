@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.animation as animation
 
-from models.base import Generator, Discriminator
+from models.base import Decoder, Discriminator
 
 class BEGAN(object):
     def __init__(self, config):
@@ -26,8 +26,8 @@ class BEGAN(object):
         self.lambda_k = config.lambda_k
 
     def build_model(self):
-        self.generator = Generator(self.img_size, self.latent_size, self.channels).to(self.device)
-        self.discriminator = Discriminator(self.img_size, self.latent_size, self.channels).to(self.device)
+        self.generator = Decoder(self.img_size).to(self.device)
+        self.discriminator = Discriminator(self.img_size).to(self.device)
 
         self.g_optim = torch.optim.Adam(
             self.generator.parameters(),
@@ -90,7 +90,6 @@ class BEGAN(object):
         bar.finish()
         return running_g, running_d
 
-
     def test(self, test_data):
         bar = Bar('Testing', max=len(test_data))
         # set to train
@@ -124,17 +123,20 @@ class BEGAN(object):
         bar.finish()
         return running_c
 
-    def visualize(self, z_G, savepath):
+    def visualize(self, savepath):
 
         # set to eval
         self.generator.eval()
         self.discriminator.eval()
 
+        z_G = Variable(torch.FloatTensor(self.batch_size, self.latent_size)).to(self.device)
+        z_G.data.normal_(0,1)
+
         sample_z_G = self.generator(z_G)
         AE_fake = self.discriminator(sample_z_G)
 
         # preprocess generated images
-        gen_img = sample_z_G.detach().numpy() * 0.5 + 0.5
+        gen_img = sample_z_G.cpu().detach().numpy() * 0.5 + 0.5
         gen_img = np.transpose(gen_img * 255.0, (0,2,3,1)).astype(np.uint8)
 
         # prepare grid on plot

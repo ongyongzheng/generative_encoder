@@ -7,7 +7,7 @@ import os
 
 from config import Config
 from data_loader import make_loader
-from models.BEGAN import BEGAN
+from models.AE import AE
 
 def get_folder_dir(mode):
     if mode == 'celeba':
@@ -17,12 +17,11 @@ def get_folder_dir(mode):
 config = Config()
 
 # create model
-began = BEGAN(config)
-began.build_model()
+ae = AE(config)
+ae.build_model()
 
 print("model structure")
-print(began.generator)
-print(began.discriminator)
+print(ae.discriminator)
 print()
 
 # create dataloader
@@ -34,22 +33,24 @@ train, test = make_loader(
     config.num_workers
 )
 
-"""z_G = Variable(torch.FloatTensor(config.random_size, config.latent_size)).to(config.device)
-z_G.data.normal_(0,1)"""
+for step, data in enumerate(test):
+    val_data = data[0:config.random_size]
+    break
 
 conv_scores = []
 best_c = 1e10
 for epoch in range(config.n_epochs):
-    running_g, running_d = began.train(train)
-    running_c = began.test(test)
+    running_d = ae.train(train)
+    running_c = ae.test(test)
     conv_scores.append(running_c)
-    print("Epoch {} - G-loss = {:.4f}, D-loss = {:.4f}".format(epoch+1, running_g, running_d))
-    print("Convergence value {:.4f}".format(running_c))
-    np.save(config.save_path + 'conv_scores', conv_scores)
+    print("Epoch {} - AE-loss = {:.4f}".format(epoch+1, running_d))
+    print("Test Loss value {:.4f}".format(running_c))
+    np.save(config.save_path + 'ae_conv_scores', conv_scores)
     if running_c < best_c:
         # model improved, so save
-        began.save_model(config.save_path)
+        ae.save_model(config.save_path)
         best_c = running_c
-    if (epoch + 1) % 5 == 0:
+    if (epoch + 1) % 10 == 0:
         # save checkpoint
-        began.visualize(config.save_path + 'ep' + str(epoch+1) + '_')
+        print("saving image")
+        ae.visualize(val_data, config.save_path + 'ep' + str(epoch+1) + '_')
