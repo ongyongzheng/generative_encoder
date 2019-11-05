@@ -34,6 +34,9 @@ class Generator(nn.Module):
         img = self.conv_blocks(out)
         return img
 
+    def save_model(self, path):
+        torch.save(self.state_dict(), path)
+
 class Encoder(nn.Module):
     def __init__(self, img_size, latent_size, channels):
         super(Encoder, self).__init__()
@@ -56,6 +59,9 @@ class Encoder(nn.Module):
         z = self.fc(z.view(z.size(0), -1))
         return z
 
+    def save_model(self, path):
+        torch.save(self.state_dict(), path)
+
 class Decoder(nn.Module):
     def __init__(self, img_size, latent_size, channels):
         super(Decoder, self).__init__()
@@ -76,6 +82,9 @@ class Decoder(nn.Module):
         out = self.fc(z)
         out = self.up(out.view(out.size(0), 64, self.down_size, self.down_size))
         return out
+
+    def save_model(self, path):
+        torch.save(self.state_dict(), path)
 
 class Discriminator(nn.Module):
     def __init__(self, img_size, latent_size, channels):
