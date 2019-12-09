@@ -10,7 +10,7 @@ warnings.filterwarnings("ignore")
 
 from config import Config
 from data_loader import make_loader
-from models.AE import AE
+from models.BEGAN import BEGAN
 
 def get_folder_dir(mode):
     if mode == 'celeba':
@@ -33,8 +33,9 @@ for step, data in enumerate(test):
     break
 
 # create model
-ae = AE(config, val_data)
-ae.build_model()
+began = BEGAN(config, val_data)
+began.build_model()
+began.load_model()
 
 def print_network(net):
     num_params = 0
@@ -44,7 +45,8 @@ def print_network(net):
     print('Total number of parameters: %d' % num_params)
 
 print("model structure")
-print_network(ae.ae)
+print_network(began.generator)
+print_network(began.discriminator)
 print()
 
-ae.train(train)
+began.train_ae(train, config.n_epochs)

@@ -119,7 +119,8 @@ def base_decoder_block(_type, n_filter=128, n_repeat=2):
                 layers.append(nn.ELU(True))
             else:
                 layers.append(nn.Conv2d(n_filter, 3, 3, 1, 1))
-                layers.append(nn.Tanh())
+                #layers.append(nn.Tanh())
+                #layers.append(nn.Sigmoid())
 
     else:
         raise
@@ -165,7 +166,7 @@ def base_encoder_block(_type, n_filter=128, n_repeat=2, inter_scale=1):
 
 
 class Decoder(nn.Module):
-    def __init__(self, image_size, hidden_dim=64, n_filter=128, n_repeat=2):
+    def __init__(self, image_size, hidden_dim=64, n_filter=128, n_repeat=4):
         super(Decoder, self).__init__()
         self.image_size = image_size
         self.n_upsample = int(log2(image_size//8))
@@ -247,20 +248,191 @@ class Encoder(nn.Module):
 
         out = out.view(out.size(0), -1)
         out = self.fc(out)
+        #out = nn.Tanh()(out)
 
         return out
 
     def save_model(self, path):
         torch.save(self.state_dict(), path)
 
+def normal_init(m, mean, std):
+    if isinstance(m, (nn.Linear, nn.Conv2d)):
+        m.weight.data.normal_(mean, std)
+        if m.bias.data is not None:
+            m.bias.data.zero_()
+
 class Discriminator(nn.Module):
     def __init__(self, img_size):
         super(Discriminator, self).__init__()
 
-        self.encoder = Encoder(img_size)
-        self.decoder = Decoder(img_size)
+        self.encoder = Encoder(img_size, n_repeat=2)
+        self.decoder = Decoder(img_size, n_repeat=2)
 
     def forward(self, img):
         z = self.encoder(img)
         out = self.decoder(z)
         return out
+
+    def weight_init(self, mean, std):
+        self.encoder.weight_init(mean, std)
+        self.decoder.weight_init(mean, std)
+
+class Generator(nn.Module):
+    def __init__(self, img_size):
+        super(Generator, self).__init__()
+        self.decoder = Decoder(img_size, n_repeat=2)
+
+    def forward(self, h):
+        out = self.decoder(h)
+
+        return out
+
+    def save_model(self, path):
+        torch.save(self.state_dict(), path)
+
+    def weight_init(self, mean, std):
+        self.decoder.weight_init(mean, std)
+
+class ConvAE(nn.Module):
+    def __init__(self, img_size=64, hidden_dim=128):
+        super(ConvAE, self).__init__()
+        self.img_size = img_size
+        self.hidden_dim = hidden_dim
+        f = 64
+        self.f = f # based on Chen Lin's code
+        k = 3
+        p = 0
+        s = 2
+        c_p = 1
+
+        # prepare ConvAE
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(3, f, k, padding=c_p),
+            nn.ReLU(),
+            nn.Conv2d(f, f, k, padding=c_p),
+            nn.ReLU(),
+            nn.Conv2d(f, f, k, padding=c_p),
+            nn.ReLU(),
+            nn.Conv2d(f, 2*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.MaxPool2d(2, stride=s, padding=p)
+        )
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(2*f, 2*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.Conv2d(2*f, 2*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.Conv2d(2*f, 3*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.MaxPool2d(2, stride=s, padding=p)
+        )
+        self.conv3 = nn.Sequential(
+            nn.Conv2d(3*f, 3*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.Conv2d(3*f, 3*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.Conv2d(3*f, 4*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.MaxPool2d(2, stride=s, padding=p)
+        )
+        self.conv4 = nn.Sequential(
+            nn.Conv2d(4*f, 4*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.Conv2d(4*f, 4*f, k, padding=c_p),
+            nn.ReLU()
+        )
+        self.conv4_128 = nn.Sequential(
+            nn.Conv2d(4*f, 5*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.MaxPool2d(2, stride=s, padding=p),
+            nn.Conv2d(5*f, 5*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.Conv2d(5*f, 5*f, k, padding=c_p),
+            nn.ReLU()
+        )
+        self.num_pool = 3
+        self.num_fil = 4
+        if img_size == 128:
+            self.num_pool += 1
+            self.num_fil += 1
+        out_size = int(img_size / (2 ** self.num_pool))
+        print("Out Size: {}".format(out_size))
+        self.lin_size = out_size * out_size * self.num_fil * f
+        self.fc1 = nn.Linear(self.lin_size, 8*4*self.hidden_dim)
+        self.feature = nn.Linear(8*4*self.hidden_dim, self.hidden_dim)
+        self.fc3 = nn.Linear(self.hidden_dim, 8*4*self.hidden_dim)
+        self.fc4 = nn.Linear(8*4*self.hidden_dim, self.lin_size)
+        self.deconv4_128 = nn.Sequential(
+            nn.ConvTranspose2d(5*f, 5*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.ConvTranspose2d(5*f, 5*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.UpsamplingBilinear2d(scale_factor=2),
+            nn.ConvTranspose2d(5*f, 4*f, k, padding=c_p),
+            nn.ReLU()
+        )
+        self.deconv4 = nn.Sequential(
+            nn.ConvTranspose2d(4*f, 4*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.ConvTranspose2d(4*f, 4*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.UpsamplingBilinear2d(scale_factor=2),
+            nn.ConvTranspose2d(4*f, 3*f, k, padding=c_p),
+            nn.ReLU()
+        )
+        self.deconv3 = nn.Sequential(
+            nn.ConvTranspose2d(3*f, 3*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.ConvTranspose2d(3*f, 3*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.UpsamplingBilinear2d(scale_factor=2),
+            nn.ConvTranspose2d(3*f, 2*f, k, padding=c_p),
+            nn.ReLU()
+        )
+        self.deconv2 = nn.Sequential(
+            nn.ConvTranspose2d(2*f, 2*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.ConvTranspose2d(2*f, 2*f, k, padding=c_p),
+            nn.ReLU(),
+            nn.UpsamplingBilinear2d(scale_factor=2),
+            nn.ConvTranspose2d(2*f, f, k, padding=c_p),
+            nn.ReLU()
+        )
+        self.deconv1 = nn.Sequential(
+            nn.ConvTranspose2d(f, f, k, padding=c_p),
+            nn.ReLU(),
+            nn.ConvTranspose2d(f, 3, k, padding=c_p)
+        )
+
+    def encode(self, input):
+        x = self.conv1(input)
+        x = self.conv2(x)
+        x = self.conv3(x)
+        x = self.conv4(x)
+        if self.img_size == 128:
+            x = self.conv4_128(x)
+        x = x.view(x.size(0),-1)
+        x = self.fc1(x)
+        out = self.feature(x)
+        return out
+
+    def decode(self, z):
+        z = self.fc3(z)
+        z = self.fc4(z)
+        z = z.view(z.size(0),self.num_fil*self.f,8,8)
+        if self.img_size == 128:
+            z = self.deconv4_128(z)
+        z = self.deconv4(z)
+        z = self.deconv3(z)
+        z = self.deconv2(z)
+        out = self.deconv1(z)
+        return out
+
+    def forward(self, input):
+        z = self.encode(input)
+        out = self.decode(z)
+        return out
+
+    def save_model(self, path):
+        torch.save(self.state_dict(), path)
+

@@ -5,12 +5,9 @@ from torch.autograd import Variable
 import numpy as np
 import os
 
-import warnings
-warnings.filterwarnings("ignore")
-
 from config import Config
 from data_loader import make_loader
-from models.AE import AE
+from models.GE0 import GE0
 
 def get_folder_dir(mode):
     if mode == 'celeba':
@@ -18,6 +15,15 @@ def get_folder_dir(mode):
 
 # create config
 config = Config()
+
+# create model
+ge0 = GE0(config)
+ge0.build_model()
+
+print("model structure")
+print(ge0.generator)
+print(ge0.discriminator)
+print()
 
 # create dataloader
 train, test = make_loader(
@@ -28,23 +34,4 @@ train, test = make_loader(
     config.num_workers
 )
 
-for step, data in enumerate(test):
-    val_data = data[0:config.random_size]
-    break
-
-# create model
-ae = AE(config, val_data)
-ae.build_model()
-
-def print_network(net):
-    num_params = 0
-    for param in net.parameters():
-        num_params += param.numel()
-    print(net)
-    print('Total number of parameters: %d' % num_params)
-
-print("model structure")
-print_network(ae.ae)
-print()
-
-ae.train(train)
+ge0.test(test)

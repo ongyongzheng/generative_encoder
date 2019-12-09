@@ -5,6 +5,9 @@ from torch.autograd import Variable
 import numpy as np
 import os
 
+import warnings
+warnings.filterwarnings("ignore")
+
 from config import Config
 from data_loader import make_loader
 from models.BEGAN import BEGAN
@@ -16,15 +19,6 @@ def get_folder_dir(mode):
 # create config
 config = Config()
 
-# create model
-began = BEGAN(config)
-began.build_model()
-
-print("model structure")
-print(began.generator)
-print(began.discriminator)
-print()
-
 # create dataloader
 train, test = make_loader(
     config.dataset_path,
@@ -34,22 +28,24 @@ train, test = make_loader(
     config.num_workers
 )
 
-"""z_G = Variable(torch.FloatTensor(config.random_size, config.latent_size)).to(config.device)
-z_G.data.normal_(0,1)"""
+for step, data in enumerate(test):
+    val_data = data[0:config.random_size]
+    break
 
-conv_scores = []
-best_c = 1e10
-for epoch in range(config.n_epochs):
-    running_g, running_d = began.train(train)
-    running_c = began.test(test)
-    conv_scores.append(running_c)
-    print("Epoch {} - G-loss = {:.4f}, D-loss = {:.4f}".format(epoch+1, running_g, running_d))
-    print("Convergence value {:.4f}".format(running_c))
-    np.save(config.save_path + 'conv_scores', conv_scores)
-    if running_c < best_c:
-        # model improved, so save
-        began.save_model(config.save_path)
-        best_c = running_c
-    if (epoch + 1) % 5 == 0:
-        # save checkpoint
-        began.visualize(config.save_path + 'ep' + str(epoch+1) + '_')
+# create model
+began = BEGAN(config, val_data)
+began.build_model()
+
+def print_network(net):
+    num_params = 0
+    for param in net.parameters():
+        num_params += param.numel()
+    print(net)
+    print('Total number of parameters: %d' % num_params)
+
+print("model structure")
+print_network(began.generator)
+print_network(began.discriminator)
+print()
+
+began.train(train, config.n_epochs)

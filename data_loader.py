@@ -61,15 +61,17 @@ class ImageFolder(data.Dataset):
 def make_loader(root, batch_size, mode, img_size, num_workers=2, shuffle=True):
     folder = get_folder_dir(mode)[0]
     transform = transforms.Compose([
+        #transforms.Resize((img_size, img_size)),
         transforms.ToTensor(),
-        #transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
 
     # load train data
     train_data = ImageFolder(
         os.path.join(root, folder, 'img_resize_' + str(img_size), 'train'),
         transform=transform)
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=shuffle, num_workers=int(num_workers))
+    train_loader = torch.utils.data.DataLoader(
+        train_data, batch_size=batch_size, shuffle=shuffle, num_workers=int(num_workers), drop_last=True)
 
     # load test data
     test_data = ImageFolder(

@@ -9,10 +9,10 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.animation as animation
 
-from models.base import Discriminator
+from models.base import ConvAE, Generator
 
 class AE(object):
-    def __init__(self, config):
+    def __init__(self, config, val_data):
         # save some variables
         self.img_size = config.img_size
         self.img_shape = config.img_shape
@@ -22,72 +22,89 @@ class AE(object):
         self.n_epochs = config.n_epochs
         self.latent_size = config.latent_size
         self.channels = config.channels
+        self.val_data = val_data
+        self.weight_dir = config.save_path
+        self.fixed = torch.rand(2*8, self.latent_size).to(self.device).mul(2).add(-1)
 
     def build_model(self):
-        self.discriminator = Discriminator(self.img_size).to(self.device)
-        self.d_optim = torch.optim.Adam(
-            self.discriminator.parameters(),
-            lr=self.lr)
+        self.ae = ConvAE(img_size=self.img_size).to(self.device)
+        self.generator = Generator(img_size=self.img_size).to(self.device)
+        self.generator.eval()
+        self.generator.load_state_dict(torch.load(self.weight_dir + 'gen'))
+        self.a_optim = torch.optim.Adam(
+            self.ae.parameters(),
+            lr=self.lr,
+            betas=(0.5, 0.999)
+        )
 
-    def train(self, train_data):
-        bar = Bar('Training', max=len(train_data))
-        # set to train
-        self.discriminator.train()
+    def train(self, train_data, num_epochs=20):
+        losses = []
+        ae_real = []
+        ae_fake = []
+        best_loss = 1e10
+        self.global_iter = 0
+        self.fixed_G = self.generator(self.fixed)
 
-        running_d = 0
+        for epoch in range(num_epochs):
+            for step, data in enumerate(train_data):
+                self.global_iter += 1
+                # set to train
+                self.ae.train()
+                self.generator.eval()
 
-        for step, data in enumerate(train_data):
-            # generated sample
-            AE_x = self.discriminator(data.to(self.device)) # pass through autoencoder
+                # train ae
+                AE_x = self.ae(data.to(self.device))
+                z_G = torch.rand(self.batch_size, self.latent_size).to(self.device).mul(2).add(-1)
+                sample_z_G = self.generator(z_G)
+                AE_fake = self.ae(sample_z_G.detach())
 
-            d_loss_real = nn.MSELoss()(AE_x, data.to(self.device))
+                d_loss_real = nn.MSELoss()(AE_x, data.to(self.device))
+                d_loss_fake = nn.MSELoss()(AE_fake, sample_z_G)
 
-            self.d_optim.zero_grad()
-            d_loss = d_loss_real
-            d_loss.backward()
-            self.d_optim.step()
+                d_loss = d_loss_real + d_loss_fake
+                self.a_optim.zero_grad()
+                d_loss.backward()
+                self.a_optim.step()
 
-            running_d += d_loss
+                # visualize
+                if self.global_iter % 500 == 0:
+                    print()
+                    print('Iter:{}, Loss:{:.3f}'.format(self.global_iter,d_loss))
+                    print('d_loss_real:{:.3f}, d_loss_fake:{:.3f}'.format(
+                        d_loss_real.cpu().item(),
+                        d_loss_fake.cpu().item()
+                    ))
+                    # save image
+                    ae_real.append(d_loss_real.cpu().item())
+                    ae_fake.append(d_loss_fake.cpu().item())
+                    np.save(self.weight_dir + 'ae64_ae_real', np.array(ae_real))
+                    np.save(self.weight_dir + 'ae64_ae_fake', np.array(ae_fake))
+                    plt.close()
+                    plt.plot(np.array(ae_real), 'b-', label='ae_real')
+                    plt.plot(np.array(ae_fake), 'r-', label='ae_fake')
+                    plt.legend(loc="upper right")
+                    plt.savefig(self.weight_dir + 'ae64_graph.png', format='png', dpi=300)
+                    plt.close()
+                    self.visualize_ae(self.val_data, self.weight_dir + 'ae64_t_')
+                    plt.close()
+                    self.visualize_ae(self.fixed_G, self.weight_dir + 'ae64_g_')
+                    plt.close()
+                    self.save_model(self.weight_dir + 'ae64_')
 
-            bar.next()
-        running_d /= len(train_data)
-        bar.finish()
-        return running_d
-
-    def test(self, test_data):
-        bar = Bar('Testing', max=len(test_data))
-        # set to train
-        self.discriminator.eval()
-
-        running_c = 0
-
-        for step, data in enumerate(test_data):
-            # generated sample
-            AE_x = self.discriminator(data.to(self.device))
-
-            d_loss_real = nn.MSELoss()(AE_x, data.to(self.device))
-            conv = d_loss_real.item()
-            running_c += conv
-
-            bar.next()
-        running_c /= len(test_data)
-        bar.finish()
-        return running_c
-
-    def visualize(self, val_data, savepath):
+    def visualize_ae(self, val_data, savepath):
 
         # set to eval
-        self.discriminator.eval()
+        self.ae.eval()
 
-        AE_x = self.discriminator(val_data.to(self.device))
+        AE_x = self.ae(val_data.to(self.device))
 
         # preprocess generated images
         gen_img = AE_x.cpu().detach().numpy() * 0.5 + 0.5
-        gen_img = np.transpose(gen_img * 255.0, (0,2,3,1)).astype(np.uint8)
+        gen_img = np.transpose(gen_img, (0,2,3,1))#.astype(np.uint8)
 
         # preprocess original images
         ori_img = val_data.cpu().detach().numpy() * 0.5 + 0.5
-        ori_img = np.transpose(ori_img * 255.0, (0,2,3,1)).astype(np.uint8)
+        ori_img = np.transpose(ori_img, (0,2,3,1))#.astype(np.uint8)
 
         # prepare grid on plot
         fig = plt.figure(figsize=(10, 7.5))
@@ -127,5 +144,4 @@ class AE(object):
         fig.savefig(savepath + 'ae_fig.png', format='png', dpi=300)
 
     def save_model(self, path):
-        self.discriminator.encoder.save_model(path + 'ae_enc')
-        self.discriminator.decoder.save_model(path + 'ae_dec')
+        self.ae.save_model(path + 'ae')
