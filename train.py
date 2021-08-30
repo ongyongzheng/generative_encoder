@@ -1,12 +1,6 @@
 """
 @author: Yong Zheng Ong
 the main function for training models
-
-1. PGAN training
-nohup python train.py PGAN --restart -n digital_rock_train_pgan_clean -c config_digital_rock.json > digital_rock_train_pgan_clean.out &
-
-2. VAE training
-nohup python train.py VAE --restart -n digital_rock_train_vae_clean -c config_digital_rock.json > digital_rock_train_vae_clean.out &
 """
 import os
 import sys

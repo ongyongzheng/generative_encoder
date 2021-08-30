@@ -58,6 +58,8 @@ README.txt
 
 Download the zip file from the link and copy the files to the root of the repository.
 
+[Google Drive Link](https://drive.google.com/drive/folders/1Xip1PqMiwuLQarYCx5Kvyz4cQ5Am0eyf?usp=sharing)
+
 #### Step 1: Train the GAN model
 
 ```

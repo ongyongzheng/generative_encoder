@@ -1,8 +1,6 @@
 """
 @author: Yong Zheng Ong
 the main function for running the ge model
-
-nohup bash tests/digital_rock_images/test_digital_rock_images.sh &> test_digital_rock_images.out &
 """
 
 import importlib

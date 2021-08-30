@@ -1,8 +1,6 @@
 """
 @author: Yong Zheng Ong
 This code implements the GE framework
-
-nohup bash tests/digital_rock_images/test_digital_rock_images.sh &> test_digital_rock_images.out &
 """
 import os
 import sys
