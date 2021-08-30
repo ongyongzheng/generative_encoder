@@ -97,3 +97,25 @@ def getDataset(path_db, targets, size, modelConfig):
     return ImageDataset(path_db,
                         target=targets,
                         transform=transform)
+
+def standardTransform(size, dimOutput=3, transform_type='image'):
+    if transform_type == 'image':
+        # in image datasets, we do resize, numpy to tensor, then normalize
+        transformList = [NumpyResize(size),
+                         NumpyToTensor()]
+
+        if dimOutput == 1:
+            transformList = [Transforms.Grayscale(1)] + transformList + [Transforms.Normalize((0.5), (0.5))]
+        else:
+            transformList = transformList + [Transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
+
+        inTransform = Transforms.Compose(transformList)
+
+        if dimOutput == 1:
+            outTransform = Transforms.Compose([Transforms.Normalize((-1.), (2)),
+                                               Transforms.ToPILImage()])
+        else:
+            outTransform = Transforms.Compose([Transforms.Normalize((-1., -1., -1.), (2, 2, 2)),
+                                               Transforms.ToPILImage()])
+
+    return inTransform, outTransform

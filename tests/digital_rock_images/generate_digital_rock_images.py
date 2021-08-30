@@ -1,6 +1,8 @@
 """
 @author: Yong Zheng Ong
 This code implements the GE framework
+
+nohup bash tests/digital_rock_images/test_digital_rock_images.sh &> test_digital_rock_images.out &
 """
 import os
 import sys
@@ -29,27 +31,18 @@ from dataloader.image_dataloader import pil_loader, standardTransform
 import json
 
 def test(parser):
-    # load some constants
     args = parser.parse_args()
+    key = '{}_0'.format(args.digital_rock_position)
+    image_to_test = 'dataset/digital_rock_images_test/slice_{}.jpg'.format(key)
     with_ae = args.with_ae
+
     evaluation_id = args.evaluation_id
     if not os.path.exists('./results/{}'.format(evaluation_id)):
         os.makedirs('./results/{}'.format(evaluation_id))
 
-    if args.evaluation_name == 'celeba':
-        key = [f for f in sorted(os.listdir('dataset/img_align_celeba_test_cropped')) if f[-3:] == 'jpg'][args.position]
-        image_to_test = 'dataset/img_align_celeba_test_cropped/{}.jpg'.format(key)
-
-        # load config data
-        with open('config_celeba_cropped.json', 'rb') as file:
-            trainingConfig = json.load(file)
-
-        scale_gan = 5
-        iter_gan = 200000
-
-        if with_ae:
-            scale_ae = 0
-            iter_ae = 1536000
+    # load config data
+    with open('config_digital_rock.json', 'rb') as file:
+        trainingConfig = json.load(file)
 
     if not os.path.exists('./results/plots'):
         os.makedirs('./results/plots')
@@ -65,8 +58,8 @@ def test(parser):
     config_gan = {
         'name' : args.gan_name, # model name (str)
         'module' : 'PGAN',
-        'scale' : scale_gan, # scale to evaluate (int)
-        'iter' : iter_gan, # iteration to evaluate (int)
+        'scale' : 6, # scale to evaluate (int)
+        'iter' : 200000, # iteration to evaluate (int)
     }
     # get checkpoint data
     checkPointDir = os.path.join(default_dir, config_gan["name"])
@@ -92,8 +85,8 @@ def test(parser):
     modelType = loadmodule(modelPackage, modelName)
 
     gan_model = modelType(useGPU=True,
-                          storeAVG=True,
-                          config=configData)
+                      storeAVG=True,
+                      **configData)
 
     if config_gan["scale"] is None or config_gan["iter"] is None:
         _, config_gan["scale"], config_gan["iter"] = parse_state_name(pathModel)
@@ -109,8 +102,8 @@ def test(parser):
         config_ae = {
             'name' : args.ae_name, # model name (str)
             'module' : 'VAE',
-            'scale' : scale_ae, # scale to evaluate (int)
-            'iter' : iter_ae, # iteration to evaluate (int)
+            'scale' : 0, # scale to evaluate (int)
+            'iter' : 32800, # iteration to evaluate (int)
         }
         # get checkpoint data
         checkPointDir = os.path.join(default_dir, config_ae["name"])
@@ -136,8 +129,8 @@ def test(parser):
         modelType = loadmodule(modelPackage, modelName)
 
         ae_model = modelType(useGPU=True,
-                             storeAVG=False,
-                             config=configData)
+                        storeAVG=False,
+                        **configData)
 
         if config_ae["scale"] is None or config_ae["iter"] is None:
             _, config_ae["scale"], config_ae["iter"] = parse_state_name(pathModel)
@@ -149,7 +142,7 @@ def test(parser):
     size = gan_model.getSize()
     print("size", size)
 
-    # build standard transform for images
+    # build standard transform
     inTransform, outTransform = standardTransform(size, dimOutput)
 
     image_real = inTransform(pil_loader(image_to_test)).view(1,dimOutput,*size).to('cuda:0')
@@ -162,9 +155,9 @@ def test(parser):
 
     image_real_save = torch.clamp(image_real.cpu(), min=-1, max=1)
 
-    transform(image_real_save[0]).save("./results/{}/{}_real.jpg".format(evaluation_id, key))
+    transform(image_real_save[0]).save("./results/{}/bulk_to_test_{}.jpg".format(evaluation_id, key))
 
-    num_iter = 10000
+    num_iter = 1000
     num_to_find = 1000
     # get random start vector from 1000 points
     start_choices = gan_model.buildNoiseData(num_to_find)
@@ -220,16 +213,16 @@ def test(parser):
             # to save
             if best is None:
                 best = reconstruction.cpu().detach().item()
-                transform(torch.clamp(output.detach().cpu(), min=-1, max=1)[0]).save("./results/{}/{}_ge.jpg".format(evaluation_id, key))
+                temp = transform(torch.clamp(output.detach().cpu(), min=-1, max=1)[0]).save("./results/{}/bulk_test_{}.jpg".format(evaluation_id, key))
                 best_vector = sv.vector.cpu().detach().numpy()
             elif best >= reconstruction.cpu().detach().item():
                 best = reconstruction.cpu().detach().item()
-                transform(torch.clamp(output.detach().cpu(), min=-1, max=1)[0]).save("./results/{}/{}_ge.jpg".format(evaluation_id, key))
+                temp = transform(torch.clamp(output.detach().cpu(), min=-1, max=1)[0]).save("./results/{}/bulk_test_{}.jpg".format(evaluation_id, key))
                 best_vector = sv.vector.cpu().detach().numpy()
         i += 1
-        if i == num_iter:
+        if i == 10000:
             break
     print("best: ", best)
 
     np.savetxt("./results/plots/{}_{}.csv".format(evaluation_id, key), errors, delimiter =", ", fmt ='% s')
-    np.save("./results/{}/{}_vector.npy".format(evaluation_id, key), best_vector)
+    np.save("./results/{}/vector_{}.npy".format(evaluation_id, key), best_vector)
