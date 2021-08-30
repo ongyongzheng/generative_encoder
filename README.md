@@ -72,6 +72,8 @@ For example, given the previous example, dbType = "image" while dataType = "vect
 
 ## Running a GE training process
 
+![GE Model Framework](./images/GE.png)
+
 #### Step 1: Train the GAN model
 
 ```
@@ -86,7 +88,7 @@ python train.py VAE --restart -n celeba_vae_clean -c config_celeba_cropped.json
 
 #### Step 3: Run the GE model
 
-Refer to the folder [tests/generative_encoder](tests/generative_encoder) for the main code. Update lines 47 to 52 with output scale and iteration for model to load. Update [tests/generative_encoder/test_ge_celeba.sh](tests/generative_encoder/test_ge_celeba.sh) with position of image to run GE on.
+Refer to the folder [tests/generative_encoder](./tests/generative_encoder) for the main code. Update lines 47 to 52 with output scale and iteration for model to load. Update [tests/generative_encoder/test_ge_celeba.sh](./tests/generative_encoder/test_ge_celeba.sh) with position of image to run GE on.
 
 ```
 nohup bash tests/generative_encoder/test_ge_celeba.sh &> test_ge_celeba.out &
