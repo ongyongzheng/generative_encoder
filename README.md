@@ -1,38 +1,22 @@
-# Model Zoo for Ong Yong Zheng
+# Generative Imaging and Image Processing via Generative Encoder
 
-This repository implements a model zoo.
+This repository implements the GE model found in the paper.
 
-The following models are currently supported:
+INSERT LINK ONCE AVAILABLE
+
+The following models are implemented for use in the paper:
 
 **GAN Models**
-- Progressive Growing of GAN (PGAN): https://arxiv.org/pdf/1710.10196.pdf (Supports: image, 1d_signal)
-- Wasserstein GAN (WGAN): (Supports: image, 1d_signal, vector)
-- Differentiable Vector Graphics (VGAN): https://github.com/BachiLi/diffvg, https://people.csail.mit.edu/tzumao/diffvg/ (supported by WGAN) (Supports: vector)
+- Progressive Growing of GAN (PGAN): https://arxiv.org/pdf/1710.10196.pdf (Supports: image)
 
 **AE Models**
 - Variational Auto-Encoder (VAE): (Code Referenced From) https://github.com/sksq96/pytorch-vae, https://github.com/atinghosh/VAE-pytorch
-
-**GE Framework**
-- Digital Rock Image Inpainting using GANs: https://www.researchgate.net/publication/342464064_Digital_Rock_Image_Inpainting_using_GANs
-
-### Model Banks
-
-1. Differentiable Vector Graphics
-
-- Standard Model: [VGAN](models/networks/vector_gan)
-
-~~~
-Inputs: noise vector
-Outputs: vector coordinate information
-~~~
 
 ### Dataset type legend
 
 | Data Type | Description |
 | --- | --- |
 | image | Image type supports RGB and Grayscale images, in which the field "dimOutput" in the config file determines which type |
-| 1d_signal | 1D signals are 1 dimensional signals that will be directly used for training |
-| vector | Vector images will support vector generation |
 
 ### Dataset preparation
 
@@ -40,14 +24,10 @@ The below code snippets assumes that your datasets are saved in the `dataset_raw
 
 - celebA cropped
 
+Split the dataset into train and test data (either use partitions given by the webpage, or do a 9:1 split). The dataset can be downloaded from [https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html](https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html).
+
 ```
 python datasets.py celeba_cropped dataset_raw/img_align_celeba/ -o dataset/img_align_celeba/
-```
-
-- musdb
-
-```
-python datasets.py musdb dataset_raw/musdb18 -o dataset/musdb18
 ```
 
 ## Configuration file of a training session
@@ -90,21 +70,34 @@ Often in NN training, we may require target (e.g. data inputs) and generated/pro
 
 For example, given the previous example, dbType = "image" while dataType = "vector"
 
-## TODO List:
+## Running a GE training process
 
-- Implement AEGAN architecture
-- Implement GAN to replace rasterizer
-- Implement UNet
-- Implement GE for SS
-- Restructure Code for easy access
-- Restructure datasets.py
-- Build requirements.txt
+#### Step 1: Train the GAN model
+
+```
+python train.py PGAN --restart -n celeba_pgan_clean -c config_celeba_cropped.json
+```
+
+#### Step 2: Train the VAE model
+
+```
+python train.py VAE --restart -n celeba_vae_clean -c config_celeba_cropped.json
+```
+
+#### Step 3: Run the GE model
+
+Refer to the folder [tests/generative_encoder](tests/generative_encoder) for the main code. Update lines 47 to 52 with output scale and iteration for model to load. Update [tests/generative_encoder/test_ge_celeba.sh](tests/generative_encoder/test_ge_celeba.sh) with position of image to run GE on.
+
+```
+nohup bash tests/generative_encoder/test_ge_celeba.sh &> test_ge_celeba.out &
+```
+
 
 ## CREDITS
 
 The following sources have contributed greatly to the development of this repository:
 
 - GAN Architecture, base code: https://github.com/facebookresearch/pytorch_GAN_zoo
-- Differentiable Vector Graphics: https://github.com/BachiLi/diffvg
 - VAE References: https://github.com/sksq96/pytorch-vae, https://github.com/atinghosh/VAE-pytorch
-- Generative Encoder for Image Processing: https://www.researchgate.net/publication/342464064_Digital_Rock_Image_Inpainting_using_GANs
+- Generative Encoder for Image Processing: INSERT LINK ONCE AVAILABLE
+- CelebA Dataset: https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
