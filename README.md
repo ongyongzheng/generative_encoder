@@ -1,6 +1,6 @@
 # Generative Imaging and Image Processing via Generative Encoder
 
-This repository implements the GE model found in the paper.
+This repository implements the basic GE model found in the paper.
 
 INSERT LINK ONCE AVAILABLE
 
@@ -45,7 +45,7 @@ Where a dataset can be:
 - a folder with all your images in .jpg, .png or .npy format
 
 And a dataset type can be:
-- either "image" or "1d_signal"
+- "image"
 
 To this you can add a "config" entry giving overrides to the standard configuration for the model. See models/trainer/standard_configurations to see all possible options. For example:
 
@@ -53,22 +53,13 @@ To this you can add a "config" entry giving overrides to the standard configurat
 {
     "pathDB": PATH_TO_YOUR_DATASET,
     "dbType": DATASET_TYPE,
-    "config": {"dataType": "vector",
+    "config": {"dataType": "image",
                "baseLearningRate": 0.1,
                "miniBatchSize": 22}
 }
 ```
 
 Will override the learning rate and the mini-batch-size. Please note that if you specify a - -baseLearningRate option in your command line, the command line will prevail. Depending on how you work you might prefer to have specific configuration files for each run or only rely on one configuration file and input your training parameters via the command line.
-
-### dbType vs dataType
-
-Often in NN training, we may require target (e.g. data inputs) and generated/processed data to be of different types. For example, we may require the model to generate vector information while comparing the generated vector information in the rasterized domain.
-
-- dbType refers to the data type in the training data (which determines the type of dataloader to use)
-- dataType refers to the data type of the output of the network (which determines the types of output layers to use)
-
-For example, given the previous example, dbType = "image" while dataType = "vector"
 
 ## Running a GE training process
 

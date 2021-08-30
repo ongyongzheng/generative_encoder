@@ -15,7 +15,8 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 from models.utils.utils import printProgressBar
-from models.utils.image_transform import NumpyResize, pil_loader
+from models.utils.image_transform import NumpyResize
+from dataloader.image_dataloader import pil_loader
 
 
 def saveImage(path, image):
