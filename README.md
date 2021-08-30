@@ -1,10 +1,10 @@
 # Generative Imaging and Image Processing via Generative Encoder
 
-Author: Yong Zheng Ong, [Haizhao Yang](https://haizhaoyang.github.io/)
+Author: [Yong Zheng Ong](https://www.researchgate.net/profile/Yong-Zheng-Ong), [Haizhao Yang](https://haizhaoyang.github.io/)
 
 This repository implements the basic GE model found in the paper.
 
-INSERT LINK ONCE AVAILABLE
+INSERT LINK TO PAPER ONCE AVAILABLE
 
 The following models are implemented for use in the paper:
 
@@ -38,7 +38,7 @@ python datasets.py celeba_cropped dataset_raw/img_align_celeba/ -o dataset/img_a
 
 #### Downloads
 
-The below links to some files that can be used to initialize a CelebA training session for GE.
+The below links to some files that can be used to initialize a CelebA training session for GE reconstruction. To know how to implement VAE for other applications, refer to README.txt in the downloaded folder, with instructions on how to configure the config file to take in different input and output folders for VAE.
 
 Folder structure:
 ```
@@ -85,5 +85,5 @@ The following sources have contributed greatly to the development of this reposi
 
 - GAN Architecture, base code: https://github.com/facebookresearch/pytorch_GAN_zoo
 - VAE References: https://github.com/sksq96/pytorch-vae, https://github.com/atinghosh/VAE-pytorch
-- Generative Encoder for Image Processing: INSERT LINK ONCE AVAILABLE
+- Generative Encoder for Image Processing: INSERT LINK TO PAPER ONCE AVAILABLE
 - CelebA Dataset: https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
