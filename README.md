@@ -75,7 +75,7 @@ python train.py VAE --restart -n celeba_vae_clean -c config_celeba_cropped_vae.j
 Refer to the folder [tests/generative_encoder](./tests/generative_encoder) for the main code. Update lines 47 to 52 with output scale and iteration for model to load. Update [tests/generative_encoder/test_ge_celeba.sh](./tests/generative_encoder/test_ge_celeba.sh) with position of image to run GE on.
 
 ```
-nohup bash tests/generative_encoder/test_ge_celeba.sh &> test_ge_celeba.out &
+bash tests/generative_encoder/test_ge_celeba.sh
 ```
 
 

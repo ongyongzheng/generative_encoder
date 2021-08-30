@@ -3,16 +3,10 @@
 the main function for training models
 
 1. PGAN training
-nohup python train.py PGAN --restart -n celeba_pgan_clean -c config_celeba_cropped.json > celeba_cropped_pgan_clean.out &
 nohup python train.py PGAN --restart -n digital_rock_train_pgan_clean -c config_digital_rock.json > digital_rock_train_pgan_clean.out &
-nohup python train.py PGAN --restart -n digital_rock_train_pgan_64_clean -c config_digital_rock_64.json > digital_rock_train_pgan_64_clean.out &
-nohup python train.py PGAN --restart -n digital_rock_train_pgan_128_clean -c config_digital_rock_128.json > digital_rock_train_pgan_128_clean.out &
-nohup python train.py PGAN --restart -n digital_rock_train_pgan_256_clean -c config_digital_rock_256.json > digital_rock_train_pgan_256_clean.out &
 
 2. VAE training
-nohup python train.py VAE --restart -n celeba_vae_clean -c config_celeba_cropped.json > celeba_cropped_vae_clean.out &
 nohup python train.py VAE --restart -n digital_rock_train_vae_clean -c config_digital_rock.json > digital_rock_train_vae_clean.out &
-nohup python train.py VAE --restart -n digital_rock_train_vae_512_clean -c config_digital_rock_512.json > digital_rock_train_vae_512_clean.out &
 """
 import os
 import sys

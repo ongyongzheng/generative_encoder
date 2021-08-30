@@ -1,10 +1,11 @@
+"""
+@author: Yong Zheng Ong
+the main function for running the ge model
+"""
+
 import importlib
 import argparse
 import sys
-
-"""
-nohup bash tests/generative_encoder/test_ge_celeba.sh &> test_ge_celeba.out &
-"""
 
 if __name__ == "__main__":
 
