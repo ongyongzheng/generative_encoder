@@ -103,20 +103,20 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# OS generated files #
-######################
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# MAC
+/*.DS_Store
+/*/.DS_Store
+/*/*/.DS_Store
+/*/*/*/.DS_Store
+/*/*/*/*/.DS_Store
+/*/*/*/*/*/.DS_Store
+/*/*/*/*/*/*/.DS_Store
 
-# dataset
-/*/*.jpg
-/data/*
-/results/*
-
-# vs code
-.vscode
+# repo specific ignores
+Makefile
+dataset
+dataset_raw
+upload
+results
+config_*.json
+*.out
