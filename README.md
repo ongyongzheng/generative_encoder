@@ -1,5 +1,7 @@
 # Generative Imaging and Image Processing via Generative Encoder
 
+Author: Yong Zheng Ong, [Haizhao Yang](https://haizhaoyang.github.io/)
+
 This repository implements the basic GE model found in the paper.
 
 INSERT LINK ONCE AVAILABLE
@@ -30,51 +32,42 @@ Split the dataset into train and test data (either use partitions given by the w
 python datasets.py celeba_cropped dataset_raw/img_align_celeba/ -o dataset/img_align_celeba/
 ```
 
-## Configuration file of a training session
-
-The minimum configuration file for a training session is a json file with the following lines
-
-```
-{
-    "pathDB": PATH_TO_YOUR_DATASET,
-    "dbType": DATASET_TYPE
-}
-```
-
-Where a dataset can be:
-- a folder with all your images in .jpg, .png or .npy format
-
-And a dataset type can be:
-- "image"
-
-To this you can add a "config" entry giving overrides to the standard configuration for the model. See models/trainer/standard_configurations to see all possible options. For example:
-
-```
-{
-    "pathDB": PATH_TO_YOUR_DATASET,
-    "dbType": DATASET_TYPE,
-    "config": {"dataType": "image",
-               "baseLearningRate": 0.1,
-               "miniBatchSize": 22}
-}
-```
-
-Will override the learning rate and the mini-batch-size. Please note that if you specify a - -baseLearningRate option in your command line, the command line will prevail. Depending on how you work you might prefer to have specific configuration files for each run or only rely on one configuration file and input your training parameters via the command line.
-
 ## Running a GE training process
 
 ![GE Model Framework](./images/GE.png)
 
+#### Downloads
+
+The below links to some files that can be used to initialize a CelebA training session for GE.
+
+Folder structure:
+```
+dataset
+    img_align_celeba_train_cropped
+        XXX.png
+        ...
+        YYY.png
+    img_align_celeba_test_cropped
+        XXX.png
+        ...
+        YYY.png
+config_celeba_cropped_pgan.json
+config_celeba_cropped_vae.json
+README.txt
+```
+
+Download the zip file from the link and copy the files to the root of the repository.
+
 #### Step 1: Train the GAN model
 
 ```
-python train.py PGAN --restart -n celeba_pgan_clean -c config_celeba_cropped.json
+python train.py PGAN --restart -n celeba_pgan_clean -c config_celeba_cropped_pgan.json
 ```
 
 #### Step 2: Train the VAE model
 
 ```
-python train.py VAE --restart -n celeba_vae_clean -c config_celeba_cropped.json
+python train.py VAE --restart -n celeba_vae_clean -c config_celeba_cropped_vae.json
 ```
 
 #### Step 3: Run the GE model
