@@ -197,6 +197,7 @@ def test(parser):
     errors = []
 
     threshold = 0.000
+    lamb = 0.001
     i = 0
     while best > threshold:
         ge_optimizer.zero_grad()
@@ -205,7 +206,7 @@ def test(parser):
         if with_ae:
             encoded = ae_model.netE(output)[0]
             reconstruction = torch.nn.MSELoss()(output, image_real)
-            encoded = torch.nn.MSELoss()(encoded, encoded_real)
+            encoded = torch.nn.MSELoss()(encoded, encoded_real) + lamb * torch.nn.L1Loss()(sv, torch.zeros_like(sv).to('cuda:0'))
             loss = encoded
         else:
             reconstruction = torch.nn.MSELoss()(output, image_real)
