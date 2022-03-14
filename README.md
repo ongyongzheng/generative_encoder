@@ -2,9 +2,8 @@
 
 Author: [Yong Zheng Ong](https://www.researchgate.net/profile/Yong-Zheng-Ong), [Haizhao Yang](https://haizhaoyang.github.io/)
 
-This repository implements the basic GE model found in the paper.
-
-INSERT LINK TO PAPER ONCE AVAILABLE
+This repository implements the basic GE model found in the paper:
+- [Generative Imaging and Image Processing via Generative Encoder](https://www.aimsciences.org/article/doi/10.3934/ipi.2021060)
 
 The following models are implemented for use in the paper:
 
